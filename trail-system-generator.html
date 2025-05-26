@@ -72,7 +72,7 @@
         
         <div id="output" class="output" style="display:none;">
             <h3>Generated HTML Code</h3>
-            <button class="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
+            <button class="copy-btn" onclick="copyCode()">Copy to Clipboard</button>
             <pre id="generatedCode"></pre>
         </div>
     </div>
@@ -103,17 +103,23 @@
         }
         
         function generateMap() {
-            const systemName = document.getElementById('systemName').value || 'Trail System';
-            const trailUrls = Array.from(document.querySelectorAll('.trail-url')).map(input => input.value.trim()).filter(url => url);
+            var systemName = document.getElementById('systemName').value || 'Trail System';
+            var trailInputs = document.querySelectorAll('.trail-url');
+            var trailUrls = [];
+            
+            for (var i = 0; i < trailInputs.length; i++) {
+                var url = trailInputs[i].value.trim();
+                if (url) trailUrls.push(url);
+            }
             
             if (trailUrls.length === 0) {
                 alert('Please add at least one trail URL');
                 return;
             }
             
-            const wayIds = [];
-            for (let url of trailUrls) {
-                const match = url.match(/way\/(\d+)/);
+            var wayIds = [];
+            for (var i = 0; i < trailUrls.length; i++) {
+                var match = trailUrls[i].match(/way\/(\d+)/);
                 if (match) wayIds.push(match[1]);
             }
             
@@ -122,62 +128,81 @@
                 return;
             }
             
-            const parkingLots = [];
-            const names = document.querySelectorAll('.parking-name');
-            const urls = document.querySelectorAll('.parking-url');
+            var parkingLots = [];
+            var nameInputs = document.querySelectorAll('.parking-name');
+            var urlInputs = document.querySelectorAll('.parking-url');
             
-            for (let i = 0; i < names.length; i++) {
-                const name = names[i].value.trim();
-                const url = urls[i].value.trim();
+            for (var i = 0; i < nameInputs.length; i++) {
+                var name = nameInputs[i].value.trim();
+                var url = urlInputs[i].value.trim();
                 if (name && url) {
                     parkingLots.push({name: name, url: url});
                 }
             }
             
-            const html = buildHTML(systemName, wayIds, parkingLots);
+            var html = createHTML(systemName, wayIds, parkingLots);
             document.getElementById('generatedCode').textContent = html;
             document.getElementById('output').style.display = 'block';
         }
         
-        function buildHTML(systemName, wayIds, parkingLots) {
-            let parkingSection = '';
-            let parkingStyles = '';
-            let parkingScript = '';
+        function createHTML(systemName, wayIds, parkingLots) {
+            var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>' + systemName + ' - Interactive Map</title>\n    \n    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>\n    \n    <style>\n        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; }\n        #map { height: 100vh; width: 100%; }\n        .leaflet-control-attribution { display: none !important; }';
             
             if (parkingLots.length > 0) {
-                let dropdownItems = '';
-                for (let lot of parkingLots) {
-                    dropdownItems += '<a href="' + lot.url + '" target="_blank" class="dropdown-item">' + lot.name + '</a>';
+                html += '\n        .parking-dropdown { position: absolute; top: 10px; right: 10px; z-index: 1000; }\n        .parking-btn { background: #333333; color: white; padding: 8px 12px; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }\n        .parking-btn:hover { background: #222222; }\n        .dropdown-arrow { font-size: 12px; transition: transform 0.2s; }\n        .dropdown-arrow.open { transform: rotate(180deg); }\n        .dropdown-menu { position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); min-width: 150px; display: none; }\n        .dropdown-menu.show { display: block; }\n        .dropdown-item { display: block; padding: 10px 12px; color: #333; text-decoration: none; font-size: 14px; border-bottom: 1px solid #eee; }\n        .dropdown-item:hover { background: #f5f5f5; }';
+            }
+            
+            html += '\n    </style>\n</head>\n<body>\n    <div id="map"></div>';
+            
+            if (parkingLots.length > 0) {
+                html += '\n    <div class="parking-dropdown">\n        <button class="parking-btn" onclick="toggleDropdown()">\n            Parking <span class="dropdown-arrow" id="dropdownArrow">▼</span>\n        </button>\n        <div class="dropdown-menu" id="dropdownMenu">';
+                
+                for (var i = 0; i < parkingLots.length; i++) {
+                    html += '\n            <a href="' + parkingLots[i].url + '" target="_blank" class="dropdown-item">' + parkingLots[i].name + '</a>';
                 }
                 
-                parkingSection = '<div class="parking-dropdown"><button class="parking-btn" onclick="toggleDropdown()">Parking <span class="dropdown-arrow" id="dropdownArrow">▼</span></button><div class="dropdown-menu" id="dropdownMenu">' + dropdownItems + '</div></div>';
-                
-                parkingStyles = '.parking-dropdown { position: absolute; top: 10px; right: 10px; z-index: 1000; } .parking-btn { background: #333333; color: white; padding: 8px 12px; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); } .parking-btn:hover { background: #222222; } .dropdown-arrow { font-size: 12px; transition: transform 0.2s; } .dropdown-arrow.open { transform: rotate(180deg); } .dropdown-menu { position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); min-width: 150px; display: none; } .dropdown-menu.show { display: block; } .dropdown-item { display: block; padding: 10px 12px; color: #333; text-decoration: none; font-size: 14px; border-bottom: 1px solid #eee; } .dropdown-item:hover { background: #f5f5f5; }';
-                
-                parkingScript = 'function toggleDropdown() { const menu = document.getElementById("dropdownMenu"); const arrow = document.getElementById("dropdownArrow"); menu.classList.toggle("show"); arrow.classList.toggle("open"); } document.addEventListener("click", function(event) { const dropdown = document.querySelector(".parking-dropdown"); if (!dropdown.contains(event.target)) { document.getElementById("dropdownMenu").classList.remove("show"); document.getElementById("dropdownArrow").classList.remove("open"); } });';
+                html += '\n        </div>\n    </div>';
             }
             
-            let wayQueries = '';
-            for (let id of wayIds) {
-                wayQueries += 'way(' + id + ');';
+            html += '\n    \n    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>\n    <script>';
+            
+            if (parkingLots.length > 0) {
+                html += '\n        function toggleDropdown() {\n            var menu = document.getElementById("dropdownMenu");\n            var arrow = document.getElementById("dropdownArrow");\n            menu.classList.toggle("show");\n            arrow.classList.toggle("open");\n        }\n        \n        document.addEventListener("click", function(event) {\n            var dropdown = document.querySelector(".parking-dropdown");\n            if (!dropdown.contains(event.target)) {\n                document.getElementById("dropdownMenu").classList.remove("show");\n                document.getElementById("dropdownArrow").classList.remove("open");\n            }\n        });';
             }
             
-            return '<!DOCTYPE html><html><head><title>' + systemName + ' - Interactive Map</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/><style>body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; } #map { height: 100vh; width: 100%; } .leaflet-control-attribution { display: none !important; } ' + parkingStyles + '</style></head><body><div id="map"></div>' + parkingSection + '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script><script>' + parkingScript + 'var map = L.map("map").setView([36.317554, -94.233953], 14); L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap | Flowfeed" }).addTo(map); async function fetchTrails() { const query = "[out:json][timeout:25];(' + wayQueries + ');out geom;"; try { const response = await fetch("https://overpass-api.de/api/interpreter", { method: "POST", body: query, headers: { "Content-Type": "text/plain" } }); if (response.ok) return await response.json(); } catch (error) { console.log("API error"); } return null; } async function displayTrails() { const data = await fetchTrails(); let allBounds = []; if (data && data.elements) { data.elements.forEach(way => { if (way.geometry) { const coords = way.geometry.map(point => [point.lat, point.lon]); L.polyline(coords, { color: "#FF7900", weight: 5, opacity: 0.9, smoothFactor: 2, lineCap: "round", lineJoin: "round" }).addTo(map); allBounds = allBounds.concat(coords); } }); if (allBounds.length > 0) map.fitBounds(allBounds, { padding: [40, 40], maxZoom: 15 }); } } displayTrails();</script></body></html>';
+            html += '\n        \n        var map = L.map("map").setView([36.317554, -94.233953], 14);\n        \n        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {\n            maxZoom: 19,\n            attribution: "&copy; OpenStreetMap | Flowfeed"\n        }).addTo(map);\n        \n        async function fetchTrails() {\n            var wayQueries = "';
+            
+            for (var i = 0; i < wayIds.length; i++) {
+                html += 'way(' + wayIds[i] + ');';
+            }
+            
+            html += '";\n            var query = "[out:json][timeout:25];(" + wayQueries + ");out geom;";\n            \n            try {\n                var response = await fetch("https://overpass-api.de/api/interpreter", {\n                    method: "POST",\n                    body: query,\n                    headers: { "Content-Type": "text/plain" }\n                });\n                \n                if (response.ok) {\n                    return await response.json();\n                }\n            } catch (error) {\n                console.log("API error");\n            }\n            return null;\n        }\n        \n        async function displayTrails() {\n            var data = await fetchTrails();\n            var allBounds = [];\n            \n            if (data && data.elements) {\n                data.elements.forEach(function(way) {\n                    if (way.geometry) {\n                        var coords = way.geometry.map(function(point) {\n                            return [point.lat, point.lon];\n                        });\n                        \n                        L.polyline(coords, {\n                            color: "#FF7900",\n                            weight: 5,\n                            opacity: 0.9,\n                            smoothFactor: 2,\n                            lineCap: "round",\n                            lineJoin: "round"\n                        }).addTo(map);\n                        \n                        allBounds = allBounds.concat(coords);\n                    }\n                });\n                \n                if (allBounds.length > 0) {\n                    map.fitBounds(allBounds, { padding: [40, 40], maxZoom: 15 });\n                }\n            }\n        }\n        \n        displayTrails();\n    </script>\n</body>\n</html>';
+            
+            return html;
         }
         
-        function copyToClipboard() {
-            const code = document.getElementById('generatedCode').textContent;
-            navigator.clipboard.writeText(code).then(function() {
-                alert('Code copied to clipboard!');
-            }).catch(function() {
-                const textArea = document.createElement('textarea');
-                textArea.value = code;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                alert('Code copied to clipboard!');
-            });
+        function copyCode() {
+            var code = document.getElementById('generatedCode').textContent;
+            
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(code).then(function() {
+                    alert('Code copied to clipboard!');
+                }).catch(function() {
+                    fallbackCopy(code);
+                });
+            } else {
+                fallbackCopy(code);
+            }
+        }
+        
+        function fallbackCopy(text) {
+            var textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('Code copied to clipboard!');
         }
     </script>
 </body>
