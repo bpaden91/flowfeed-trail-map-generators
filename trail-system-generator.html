@@ -18,91 +18,19 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        h1 {
-            color: #FF7900;
-            margin-bottom: 30px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #333;
-        }
-        input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-        .dynamic-section {
-            border: 1px solid #eee;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 4px;
-            background: #fafafa;
-        }
-        .add-btn, .remove-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            margin: 5px;
-        }
-        .add-btn {
-            background: #FF7900;
-            color: white;
-        }
-        .remove-btn {
-            background: #dc3545;
-            color: white;
-        }
-        .generate-btn {
-            background: #333333;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 20px;
-        }
-        .output {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-        .copy-btn {
-            background: #28a745;
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        pre {
-            background: white;
-            padding: 15px;
-            border-radius: 4px;
-            overflow-x: auto;
-            font-size: 12px;
-            line-height: 1.4;
-            max-height: 400px;
-        }
-        .help-text {
-            font-size: 12px;
-            color: #666;
-            font-style: italic;
-        }
+        h1 { color: #FF7900; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; color: #333; }
+        input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+        .dynamic-section { border: 1px solid #eee; padding: 15px; margin: 10px 0; border-radius: 4px; background: #fafafa; }
+        .add-btn, .remove-btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; margin: 5px; }
+        .add-btn { background: #FF7900; color: white; }
+        .remove-btn { background: #dc3545; color: white; }
+        .generate-btn { background: #333333; color: white; padding: 12px 24px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; width: 100%; margin-top: 20px; }
+        .output { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 4px; border: 1px solid #ddd; }
+        .copy-btn { background: #28a745; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        pre { background: white; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 12px; line-height: 1.4; max-height: 400px; }
+        .help-text { font-size: 12px; color: #666; font-style: italic; }
     </style>
 </head>
 <body>
@@ -140,11 +68,11 @@
             <button type="button" class="add-btn" onclick="addParking()">+ Add Parking Lot</button>
         </div>
         
-        <button class="generate-btn" onclick="generateTrailSystem()">Generate Trail System Map</button>
+        <button class="generate-btn" onclick="generateMap()">Generate Trail System Map</button>
         
         <div id="output" class="output" style="display:none;">
             <h3>Generated HTML Code</h3>
-            <button class="copy-btn" onclick="copyCode()">Copy to Clipboard</button>
+            <button class="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
             <pre id="generatedCode"></pre>
         </div>
     </div>
@@ -174,257 +102,74 @@
             btn.parentElement.remove();
         }
         
-        function extractWayId(url) {
-            const match = url.match(/way\/(\d+)/);
-            return match ? match[1] : null;
-        }
-        
-        function generateTrailSystem() {
+        function generateMap() {
             const systemName = document.getElementById('systemName').value || 'Trail System';
-            const trailUrls = Array.from(document.querySelectorAll('.trail-url')).map(input => input.value).filter(url => url.trim());
-            
-            const parkingLots = [];
-            const parkingNames = Array.from(document.querySelectorAll('.parking-name'));
-            const parkingUrls = Array.from(document.querySelectorAll('.parking-url'));
-            
-            for (let i = 0; i < parkingNames.length; i++) {
-                const name = parkingNames[i].value.trim();
-                const url = parkingUrls[i].value.trim();
-                if (name && url) {
-                    parkingLots.push({name, url});
-                }
-            }
+            const trailUrls = Array.from(document.querySelectorAll('.trail-url')).map(input => input.value.trim()).filter(url => url);
             
             if (trailUrls.length === 0) {
                 alert('Please add at least one trail URL');
                 return;
             }
             
-            const wayIds = trailUrls.map(extractWayId).filter(id => id);
+            const wayIds = [];
+            for (let url of trailUrls) {
+                const match = url.match(/way\/(\d+)/);
+                if (match) wayIds.push(match[1]);
+            }
+            
             if (wayIds.length === 0) {
                 alert('Please enter valid OpenStreetMap URLs');
                 return;
             }
             
-            const html = createTrailSystemHTML(systemName, wayIds, parkingLots);
+            const parkingLots = [];
+            const names = document.querySelectorAll('.parking-name');
+            const urls = document.querySelectorAll('.parking-url');
+            
+            for (let i = 0; i < names.length; i++) {
+                const name = names[i].value.trim();
+                const url = urls[i].value.trim();
+                if (name && url) {
+                    parkingLots.push({name: name, url: url});
+                }
+            }
+            
+            const html = buildHTML(systemName, wayIds, parkingLots);
             document.getElementById('generatedCode').textContent = html;
             document.getElementById('output').style.display = 'block';
-            document.getElementById('output').scrollIntoView({ behavior: 'smooth' });
         }
         
-        function createTrailSystemHTML(systemName, wayIds, parkingLots) {
-            let parkingHTML = '';
-            let parkingCSS = '';
-            let parkingJS = '';
+        function buildHTML(systemName, wayIds, parkingLots) {
+            let parkingSection = '';
+            let parkingStyles = '';
+            let parkingScript = '';
             
             if (parkingLots.length > 0) {
-                const parkingItems = parkingLots.map(lot => 
-                    `<a href="${lot.url}" target="_blank" class="dropdown-item">${lot.name}</a>`
-                ).join('');
-                
-                parkingHTML = `
-    <!-- Parking Dropdown -->
-    <div class="parking-dropdown">
-        <button class="parking-btn" onclick="toggleDropdown()">
-            Parking <span class="dropdown-arrow" id="dropdownArrow">▼</span>
-        </button>
-        <div class="dropdown-menu" id="dropdownMenu">
-            ${parkingItems}
-        </div>
-    </div>`;
-                
-                parkingCSS = `
-        
-        /* Parking dropdown styles */
-        .parking-dropdown {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-        }
-        .parking-btn {
-            background: #333333;
-            color: white;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .parking-btn:hover {
-            background: #222222;
-        }
-        .dropdown-arrow {
-            font-size: 12px;
-            transition: transform 0.2s;
-        }
-        .dropdown-arrow.open {
-            transform: rotate(180deg);
-        }
-        .dropdown-menu {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: white;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            min-width: 150px;
-            display: none;
-            overflow: hidden;
-        }
-        .dropdown-menu.show {
-            display: block;
-        }
-        .dropdown-item {
-            display: block;
-            padding: 10px 12px;
-            color: #333;
-            text-decoration: none;
-            font-size: 14px;
-            border-bottom: 1px solid #eee;
-        }
-        .dropdown-item:last-child {
-            border-bottom: none;
-        }
-        .dropdown-item:hover {
-            background: #f5f5f5;
-            color: #333;
-        }`;
-                
-                parkingJS = `
-        
-        function toggleDropdown() {
-            const menu = document.getElementById('dropdownMenu');
-            const arrow = document.getElementById('dropdownArrow');
-            menu.classList.toggle('show');
-            arrow.classList.toggle('open');
-        }
-        
-        document.addEventListener('click', function(event) {
-            const dropdown = document.querySelector('.parking-dropdown');
-            if (!dropdown.contains(event.target)) {
-                document.getElementById('dropdownMenu').classList.remove('show');
-                document.getElementById('dropdownArrow').classList.remove('open');
-            }
-        });`;
-            }
-            
-            const wayQueries = wayIds.map(id => `way(${id});`).join('\\n                    ');
-            
-            return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${systemName} - Interactive Map</title>
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    
-    <style>
-        body { 
-            margin: 0; 
-            padding: 0; 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-        }
-        #map { 
-            height: 100vh; 
-            width: 100%; 
-        }
-        .leaflet-control-attribution {
-            display: none !important;
-        }${parkingCSS}
-    </style>
-</head>
-<body>
-    <div id="map"></div>${parkingHTML}
-    
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    
-    <script>${parkingJS}
-        
-        var map = L.map('map', {
-            zoomControl: true,
-            scrollWheelZoom: true,
-            doubleClickZoom: true
-        }).setView([36.317554, -94.233953], 14);
-        
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | <a href="https://nwa.flowfeed.app">Flowfeed</a>'
-        }).addTo(map);
-        
-        async function fetchTrails() {
-            const query = \`[out:json][timeout:25];(${wayQueries});out geom;\`;
-            const url = 'https://overpass-api.de/api/interpreter';
-            
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    body: query,
-                    headers: { 'Content-Type': 'text/plain' }
-                });
-                
-                if (response.ok) {
-                    return await response.json();
+                let dropdownItems = '';
+                for (let lot of parkingLots) {
+                    dropdownItems += '<a href="' + lot.url + '" target="_blank" class="dropdown-item">' + lot.name + '</a>';
                 }
-            } catch (error) {
-                console.log('API error, using fallback');
-            }
-            return null;
-        }
-        
-        async function displayTrails() {
-            console.log('Loading ${systemName}...');
-            
-            const data = await fetchTrails();
-            let allBounds = [];
-            
-            if (data && data.elements && data.elements.length > 0) {
-                data.elements.forEach((way, index) => {
-                    if (way.geometry) {
-                        const coords = way.geometry.map(point => [point.lat, point.lon]);
-                        
-                        L.polyline(coords, {
-                            color: '#FF7900',
-                            weight: 5,
-                            opacity: 0.9,
-                            smoothFactor: 2,
-                            lineCap: 'round',
-                            lineJoin: 'round'
-                        }).addTo(map);
-                        
-                        allBounds = allBounds.concat(coords);
-                        console.log(\`Loaded trail \${index + 1}\`);
-                    }
-                });
                 
-                if (allBounds.length > 0) {
-                    map.fitBounds(allBounds, { padding: [40, 40], maxZoom: 15 });
-                }
+                parkingSection = '<div class="parking-dropdown"><button class="parking-btn" onclick="toggleDropdown()">Parking <span class="dropdown-arrow" id="dropdownArrow">▼</span></button><div class="dropdown-menu" id="dropdownMenu">' + dropdownItems + '</div></div>';
+                
+                parkingStyles = '.parking-dropdown { position: absolute; top: 10px; right: 10px; z-index: 1000; } .parking-btn { background: #333333; color: white; padding: 8px 12px; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); } .parking-btn:hover { background: #222222; } .dropdown-arrow { font-size: 12px; transition: transform 0.2s; } .dropdown-arrow.open { transform: rotate(180deg); } .dropdown-menu { position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); min-width: 150px; display: none; } .dropdown-menu.show { display: block; } .dropdown-item { display: block; padding: 10px 12px; color: #333; text-decoration: none; font-size: 14px; border-bottom: 1px solid #eee; } .dropdown-item:hover { background: #f5f5f5; }';
+                
+                parkingScript = 'function toggleDropdown() { const menu = document.getElementById("dropdownMenu"); const arrow = document.getElementById("dropdownArrow"); menu.classList.toggle("show"); arrow.classList.toggle("open"); } document.addEventListener("click", function(event) { const dropdown = document.querySelector(".parking-dropdown"); if (!dropdown.contains(event.target)) { document.getElementById("dropdownMenu").classList.remove("show"); document.getElementById("dropdownArrow").classList.remove("open"); } });';
             }
             
-            console.log('${systemName} loaded successfully!');
+            let wayQueries = '';
+            for (let id of wayIds) {
+                wayQueries += 'way(' + id + ');';
+            }
+            
+            return '<!DOCTYPE html><html><head><title>' + systemName + ' - Interactive Map</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/><style>body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; } #map { height: 100vh; width: 100%; } .leaflet-control-attribution { display: none !important; } ' + parkingStyles + '</style></head><body><div id="map"></div>' + parkingSection + '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script><script>' + parkingScript + 'var map = L.map("map").setView([36.317554, -94.233953], 14); L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap | Flowfeed" }).addTo(map); async function fetchTrails() { const query = "[out:json][timeout:25];(' + wayQueries + ');out geom;"; try { const response = await fetch("https://overpass-api.de/api/interpreter", { method: "POST", body: query, headers: { "Content-Type": "text/plain" } }); if (response.ok) return await response.json(); } catch (error) { console.log("API error"); } return null; } async function displayTrails() { const data = await fetchTrails(); let allBounds = []; if (data && data.elements) { data.elements.forEach(way => { if (way.geometry) { const coords = way.geometry.map(point => [point.lat, point.lon]); L.polyline(coords, { color: "#FF7900", weight: 5, opacity: 0.9, smoothFactor: 2, lineCap: "round", lineJoin: "round" }).addTo(map); allBounds = allBounds.concat(coords); } }); if (allBounds.length > 0) map.fitBounds(allBounds, { padding: [40, 40], maxZoom: 15 }); } } displayTrails();</script></body></html>';
         }
         
-        displayTrails();
-    </script>
-</body>
-</html>`;
-        }
-        
-        function copyCode() {
+        function copyToClipboard() {
             const code = document.getElementById('generatedCode').textContent;
-            navigator.clipboard.writeText(code).then(() => {
+            navigator.clipboard.writeText(code).then(function() {
                 alert('Code copied to clipboard!');
-            }).catch(() => {
+            }).catch(function() {
                 const textArea = document.createElement('textarea');
                 textArea.value = code;
                 document.body.appendChild(textArea);
