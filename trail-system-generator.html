@@ -31,17 +31,13 @@
             font-weight: 500;
             color: #333;
         }
-        input, textarea {
+        input {
             width: 100%;
             padding: 8px 12px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
             box-sizing: border-box;
-        }
-        textarea {
-            height: 100px;
-            resize: vertical;
         }
         .dynamic-section {
             border: 1px solid #eee;
@@ -62,15 +58,9 @@
             background: #FF7900;
             color: white;
         }
-        .add-btn:hover {
-            background: #e56800;
-        }
         .remove-btn {
             background: #dc3545;
             color: white;
-        }
-        .remove-btn:hover {
-            background: #c82333;
         }
         .generate-btn {
             background: #333333;
@@ -82,9 +72,6 @@
             cursor: pointer;
             width: 100%;
             margin-top: 20px;
-        }
-        .generate-btn:hover {
-            background: #222;
         }
         .output {
             margin-top: 30px;
@@ -101,9 +88,6 @@
             border-radius: 4px;
             cursor: pointer;
             margin-top: 10px;
-        }
-        .copy-btn:hover {
-            background: #218838;
         }
         pre {
             background: white;
@@ -160,44 +144,33 @@
         
         <div id="output" class="output" style="display:none;">
             <h3>Generated HTML Code</h3>
-            <button class="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
+            <button class="copy-btn" onclick="copyCode()">Copy to Clipboard</button>
             <pre id="generatedCode"></pre>
         </div>
     </div>
 
     <script>
         function addTrail() {
-            console.log('Adding trail...');
             const container = document.getElementById('trailsContainer');
             const div = document.createElement('div');
             div.className = 'dynamic-section';
-            div.innerHTML = `
-                <input type="text" class="trail-url" placeholder="https://www.openstreetmap.org/way/...">
-                <button type="button" class="remove-btn" onclick="removeTrail(this)">Remove</button>
-            `;
+            div.innerHTML = '<input type="text" class="trail-url" placeholder="https://www.openstreetmap.org/way/..."><button type="button" class="remove-btn" onclick="removeTrail(this)">Remove</button>';
             container.appendChild(div);
         }
         
         function removeTrail(btn) {
-            console.log('Removing trail...');
             btn.parentElement.remove();
         }
         
         function addParking() {
-            console.log('Adding parking...');
             const container = document.getElementById('parkingContainer');
             const div = document.createElement('div');
             div.className = 'dynamic-section';
-            div.innerHTML = `
-                <input type="text" class="parking-name" placeholder="Parking lot name" style="margin-bottom: 8px;">
-                <input type="text" class="parking-url" placeholder="https://maps.app.goo.gl/...">
-                <button type="button" class="remove-btn" onclick="removeParking(this)">Remove</button>
-            `;
+            div.innerHTML = '<input type="text" class="parking-name" placeholder="Parking lot name" style="margin-bottom: 8px;"><input type="text" class="parking-url" placeholder="https://maps.app.goo.gl/..."><button type="button" class="remove-btn" onclick="removeParking(this)">Remove</button>';
             container.appendChild(div);
         }
         
         function removeParking(btn) {
-            console.log('Removing parking...');
             btn.parentElement.remove();
         }
         
@@ -207,12 +180,9 @@
         }
         
         function generateTrailSystem() {
-            console.log('Generating trail system...');
-            
             const systemName = document.getElementById('systemName').value || 'Trail System';
             const trailUrls = Array.from(document.querySelectorAll('.trail-url')).map(input => input.value).filter(url => url.trim());
             
-            // Get parking lots
             const parkingLots = [];
             const parkingNames = Array.from(document.querySelectorAll('.parking-name'));
             const parkingUrls = Array.from(document.querySelectorAll('.parking-url'));
@@ -236,43 +206,42 @@
                 return;
             }
             
-            console.log('System name:', systemName);
-            console.log('Way IDs:', wayIds);
-            console.log('Parking lots:', parkingLots);
-            
-            const html = generateTrailSystemHTML(systemName, wayIds, parkingLots);
+            const html = createTrailSystemHTML(systemName, wayIds, parkingLots);
             document.getElementById('generatedCode').textContent = html;
             document.getElementById('output').style.display = 'block';
+            document.getElementById('output').scrollIntoView({ behavior: 'smooth' });
         }
         
-        function generateTrailSystemHTML(systemName, wayIds, parkingLots) {
-            const parkingDropdown = parkingLots.length > 0 ? `
-        <!-- Parking Dropdown -->
-        <div class="parking-dropdown">
-            <button class="parking-btn" onclick="toggleDropdown()">
-                Parking <span class="dropdown-arrow" id="dropdownArrow">▼</span>
-            </button>
-            <div class="dropdown-menu" id="dropdownMenu">
-                ${parkingLots.map(lot => `
-                <a href="${lot.url}" 
-                   target="_blank" 
-                   class="dropdown-item">
-                   ${lot.name}
-                </a>`).join('')}
-            </div>
-        </div>` : '';
+        function createTrailSystemHTML(systemName, wayIds, parkingLots) {
+            let parkingHTML = '';
+            let parkingCSS = '';
+            let parkingJS = '';
             
-            const parkingCSS = parkingLots.length > 0 ? `
+            if (parkingLots.length > 0) {
+                const parkingItems = parkingLots.map(lot => 
+                    `<a href="${lot.url}" target="_blank" class="dropdown-item">${lot.name}</a>`
+                ).join('');
+                
+                parkingHTML = `
+    <!-- Parking Dropdown -->
+    <div class="parking-dropdown">
+        <button class="parking-btn" onclick="toggleDropdown()">
+            Parking <span class="dropdown-arrow" id="dropdownArrow">▼</span>
+        </button>
+        <div class="dropdown-menu" id="dropdownMenu">
+            ${parkingItems}
+        </div>
+    </div>`;
+                
+                parkingCSS = `
         
-        /* Parking dropdown container */
+        /* Parking dropdown styles */
         .parking-dropdown {
             position: absolute;
             top: 10px;
             right: 10px;
             z-index: 1000;
         }
-        
-        /* Parking button */
         .parking-btn {
             background: #333333;
             color: white;
@@ -290,8 +259,6 @@
         .parking-btn:hover {
             background: #222222;
         }
-        
-        /* Dropdown arrow */
         .dropdown-arrow {
             font-size: 12px;
             transition: transform 0.2s;
@@ -299,8 +266,6 @@
         .dropdown-arrow.open {
             transform: rotate(180deg);
         }
-        
-        /* Dropdown menu */
         .dropdown-menu {
             position: absolute;
             top: 100%;
@@ -316,8 +281,6 @@
         .dropdown-menu.show {
             display: block;
         }
-        
-        /* Dropdown items */
         .dropdown-item {
             display: block;
             padding: 10px 12px;
@@ -332,27 +295,27 @@
         .dropdown-item:hover {
             background: #f5f5f5;
             color: #333;
-        }` : '';
-            
-            const parkingJS = parkingLots.length > 0 ? `
+        }`;
+                
+                parkingJS = `
         
-        // Dropdown functionality
         function toggleDropdown() {
             const menu = document.getElementById('dropdownMenu');
             const arrow = document.getElementById('dropdownArrow');
-            
             menu.classList.toggle('show');
             arrow.classList.toggle('open');
         }
         
-        // Close dropdown when clicking outside
         document.addEventListener('click', function(event) {
             const dropdown = document.querySelector('.parking-dropdown');
             if (!dropdown.contains(event.target)) {
                 document.getElementById('dropdownMenu').classList.remove('show');
                 document.getElementById('dropdownArrow').classList.remove('open');
             }
-        });` : '';
+        });`;
+            }
+            
+            const wayQueries = wayIds.map(id => `way(${id});`).join('\\n                    ');
             
             return `<!DOCTYPE html>
 <html lang="en">
@@ -361,7 +324,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${systemName} - Interactive Map</title>
     
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
@@ -375,68 +337,50 @@
             height: 100vh; 
             width: 100%; 
         }
-        
-        /* Hide attribution links */
         .leaflet-control-attribution {
             display: none !important;
         }${parkingCSS}
     </style>
 </head>
 <body>
-    <div id="map"></div>
-    ${parkingDropdown}
+    <div id="map"></div>${parkingHTML}
     
-    <!-- Leaflet JavaScript -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     
     <script>${parkingJS}
         
-        // Initialize the map
         var map = L.map('map', {
             zoomControl: true,
             scrollWheelZoom: true,
             doubleClickZoom: true
         }).setView([36.317554, -94.233953], 14);
         
-        // Add OpenStreetMap tiles
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | <a href="https://nwa.flowfeed.app">Flowfeed</a>'
         }).addTo(map);
         
-        // Function to fetch trails
         async function fetchTrails() {
-            const query = \`
-                [out:json][timeout:25];
-                (
-                    ${wayIds.map(id => `way(${id});`).join('\n                    ')}
-                );
-                out geom;
-            \`;
-            
+            const query = \`[out:json][timeout:25];(${wayQueries});out geom;\`;
             const url = 'https://overpass-api.de/api/interpreter';
             
             try {
                 const response = await fetch(url, {
                     method: 'POST',
                     body: query,
-                    headers: {
-                        'Content-Type': 'text/plain'
-                    }
+                    headers: { 'Content-Type': 'text/plain' }
                 });
                 
                 if (response.ok) {
-                    const data = await response.json();
-                    return data;
+                    return await response.json();
                 }
             } catch (error) {
-                console.log('Using fallback coordinates');
+                console.log('API error, using fallback');
             }
             return null;
         }
         
-        // Function to display trails
         async function displayTrails() {
             console.log('Loading ${systemName}...');
             
@@ -444,13 +388,11 @@
             let allBounds = [];
             
             if (data && data.elements && data.elements.length > 0) {
-                // Process each trail segment
                 data.elements.forEach((way, index) => {
                     if (way.geometry) {
-                        const trailCoords = way.geometry.map(point => [point.lat, point.lon]);
+                        const coords = way.geometry.map(point => [point.lat, point.lon]);
                         
-                        // Create polyline for each segment
-                        const trail = L.polyline(trailCoords, {
+                        L.polyline(coords, {
                             color: '#FF7900',
                             weight: 5,
                             opacity: 0.9,
@@ -459,41 +401,30 @@
                             lineJoin: 'round'
                         }).addTo(map);
                         
-                        // Collect bounds for fitting map view
-                        allBounds = allBounds.concat(trailCoords);
-                        
-                        console.log(\`Loaded trail segment \${index + 1}\`);
+                        allBounds = allBounds.concat(coords);
+                        console.log(\`Loaded trail \${index + 1}\`);
                     }
                 });
-            }
-            
-            // Fit map to show all trails
-            if (allBounds.length > 0) {
-                map.fitBounds(allBounds, { 
-                    padding: [40, 40],
-                    maxZoom: 15 
-                });
+                
+                if (allBounds.length > 0) {
+                    map.fitBounds(allBounds, { padding: [40, 40], maxZoom: 15 });
+                }
             }
             
             console.log('${systemName} loaded successfully!');
         }
         
-        // Load the trails when page loads
         displayTrails();
-        
-        console.log('${systemName} - Powered by Flowfeed & OpenStreetMap');
     </script>
 </body>
 </html>`;
         }
         
-        function copyToClipboard() {
+        function copyCode() {
             const code = document.getElementById('generatedCode').textContent;
             navigator.clipboard.writeText(code).then(() => {
                 alert('Code copied to clipboard!');
-            }).catch(err => {
-                console.error('Failed to copy: ', err);
-                // Fallback for older browsers
+            }).catch(() => {
                 const textArea = document.createElement('textarea');
                 textArea.value = code;
                 document.body.appendChild(textArea);
@@ -503,9 +434,6 @@
                 alert('Code copied to clipboard!');
             });
         }
-        
-        // Test that JavaScript is working
-        console.log('Trail System Generator loaded successfully!');
     </script>
 </body>
 </html>
