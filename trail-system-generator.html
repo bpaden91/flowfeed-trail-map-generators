@@ -62,9 +62,15 @@
             background: #FF7900;
             color: white;
         }
+        .add-btn:hover {
+            background: #e56800;
+        }
         .remove-btn {
             background: #dc3545;
             color: white;
+        }
+        .remove-btn:hover {
+            background: #c82333;
         }
         .generate-btn {
             background: #333333;
@@ -96,6 +102,9 @@
             cursor: pointer;
             margin-top: 10px;
         }
+        .copy-btn:hover {
+            background: #218838;
+        }
         pre {
             background: white;
             padding: 15px;
@@ -103,6 +112,7 @@
             overflow-x: auto;
             font-size: 12px;
             line-height: 1.4;
+            max-height: 400px;
         }
         .help-text {
             font-size: 12px;
@@ -138,7 +148,7 @@
             <div class="help-text">Add name and Google Maps link for each parking area</div>
             <div id="parkingContainer">
                 <div class="dynamic-section">
-                    <input type="text" class="parking-name" placeholder="Parking lot name (e.g., Wolf Park)">
+                    <input type="text" class="parking-name" placeholder="Parking lot name (e.g., Wolf Park)" style="margin-bottom: 8px;">
                     <input type="text" class="parking-url" placeholder="https://maps.app.goo.gl/...">
                     <button type="button" class="remove-btn" onclick="removeParking(this)">Remove</button>
                 </div>
@@ -157,6 +167,7 @@
 
     <script>
         function addTrail() {
+            console.log('Adding trail...');
             const container = document.getElementById('trailsContainer');
             const div = document.createElement('div');
             div.className = 'dynamic-section';
@@ -168,15 +179,17 @@
         }
         
         function removeTrail(btn) {
+            console.log('Removing trail...');
             btn.parentElement.remove();
         }
         
         function addParking() {
+            console.log('Adding parking...');
             const container = document.getElementById('parkingContainer');
             const div = document.createElement('div');
             div.className = 'dynamic-section';
             div.innerHTML = `
-                <input type="text" class="parking-name" placeholder="Parking lot name">
+                <input type="text" class="parking-name" placeholder="Parking lot name" style="margin-bottom: 8px;">
                 <input type="text" class="parking-url" placeholder="https://maps.app.goo.gl/...">
                 <button type="button" class="remove-btn" onclick="removeParking(this)">Remove</button>
             `;
@@ -184,6 +197,7 @@
         }
         
         function removeParking(btn) {
+            console.log('Removing parking...');
             btn.parentElement.remove();
         }
         
@@ -193,13 +207,23 @@
         }
         
         function generateTrailSystem() {
+            console.log('Generating trail system...');
+            
             const systemName = document.getElementById('systemName').value || 'Trail System';
-            const trailUrls = Array.from(document.querySelectorAll('.trail-url')).map(input => input.value).filter(url => url);
-            const parkingLots = Array.from(document.querySelectorAll('.dynamic-section')).map(section => {
-                const name = section.querySelector('.parking-name')?.value;
-                const url = section.querySelector('.parking-url')?.value;
-                return name && url ? {name, url} : null;
-            }).filter(lot => lot);
+            const trailUrls = Array.from(document.querySelectorAll('.trail-url')).map(input => input.value).filter(url => url.trim());
+            
+            // Get parking lots
+            const parkingLots = [];
+            const parkingNames = Array.from(document.querySelectorAll('.parking-name'));
+            const parkingUrls = Array.from(document.querySelectorAll('.parking-url'));
+            
+            for (let i = 0; i < parkingNames.length; i++) {
+                const name = parkingNames[i].value.trim();
+                const url = parkingUrls[i].value.trim();
+                if (name && url) {
+                    parkingLots.push({name, url});
+                }
+            }
             
             if (trailUrls.length === 0) {
                 alert('Please add at least one trail URL');
@@ -211,6 +235,10 @@
                 alert('Please enter valid OpenStreetMap URLs');
                 return;
             }
+            
+            console.log('System name:', systemName);
+            console.log('Way IDs:', wayIds);
+            console.log('Parking lots:', parkingLots);
             
             const html = generateTrailSystemHTML(systemName, wayIds, parkingLots);
             document.getElementById('generatedCode').textContent = html;
@@ -463,8 +491,21 @@
             const code = document.getElementById('generatedCode').textContent;
             navigator.clipboard.writeText(code).then(() => {
                 alert('Code copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = code;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Code copied to clipboard!');
             });
         }
+        
+        // Test that JavaScript is working
+        console.log('Trail System Generator loaded successfully!');
     </script>
 </body>
 </html>
