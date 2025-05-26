@@ -69,6 +69,9 @@
             cursor: pointer;
             margin-top: 10px;
         }
+        .copy-btn:hover {
+            background: #218838;
+        }
         pre {
             background: white;
             padding: 15px;
@@ -76,6 +79,7 @@
             overflow-x: auto;
             font-size: 12px;
             line-height: 1.4;
+            max-height: 400px;
         }
         .help-text {
             font-size: 12px;
@@ -128,10 +132,17 @@
         }
         
         function generateIndividualTrail() {
-            const trailName = document.getElementById('trailName').value || 'Trail';
-            const trailUrl = document.getElementById('trailUrl').value;
-            const trailheadUrl = document.getElementById('trailheadUrl').value;
-            const parkingUrl = document.getElementById('parkingUrl').value;
+            console.log('Generating individual trail...');
+            
+            const trailName = document.getElementById('trailName').value.trim() || 'Trail';
+            const trailUrl = document.getElementById('trailUrl').value.trim();
+            const trailheadUrl = document.getElementById('trailheadUrl').value.trim();
+            const parkingUrl = document.getElementById('parkingUrl').value.trim();
+            
+            console.log('Trail name:', trailName);
+            console.log('Trail URL:', trailUrl);
+            console.log('Trailhead URL:', trailheadUrl);
+            console.log('Parking URL:', parkingUrl);
             
             if (!trailUrl) {
                 alert('Please enter the OpenStreetMap trail URL');
@@ -145,13 +156,18 @@
             
             const wayId = extractWayId(trailUrl);
             if (!wayId) {
-                alert('Please enter a valid OpenStreetMap URL');
+                alert('Please enter a valid OpenStreetMap URL (should contain /way/NUMBER)');
                 return;
             }
+            
+            console.log('Way ID:', wayId);
             
             const html = generateIndividualTrailHTML(trailName, wayId, trailheadUrl, parkingUrl);
             document.getElementById('generatedCode').textContent = html;
             document.getElementById('output').style.display = 'block';
+            
+            // Scroll to output
+            document.getElementById('output').scrollIntoView({ behavior: 'smooth' });
         }
         
         function generateIndividualTrailHTML(trailName, wayId, trailheadUrl, parkingUrl) {
@@ -337,8 +353,21 @@
             const code = document.getElementById('generatedCode').textContent;
             navigator.clipboard.writeText(code).then(() => {
                 alert('Code copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = code;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Code copied to clipboard!');
             });
         }
+        
+        // Test that JavaScript is working
+        console.log('Individual Trail Generator loaded successfully!');
     </script>
 </body>
 </html>
